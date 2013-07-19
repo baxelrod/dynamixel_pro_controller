@@ -1,0 +1,11 @@
+- name: H54
+  model_number: 53768 
+  cpr: 502000
+  gear_reduction: 502.0
+
+- name: H42
+  model_number: 51200
+  cpr: 304000  
+  gear_reduction: 304.0
+
+

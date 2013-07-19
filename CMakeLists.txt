@@ -4,7 +4,7 @@ project(dynamixel_pro_controller)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS dynamixel_pro_driver roscpp sensor_msgs)
+find_package(catkin REQUIRED COMPONENTS dynamixel_pro_driver roscpp roslib sensor_msgs)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -50,7 +50,7 @@ find_package(catkin REQUIRED COMPONENTS dynamixel_pro_driver roscpp sensor_msgs)
 catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES dynamixel_pro_controller
-#  CATKIN_DEPENDS dynamixel_pro_driver roscpp sensor_msgs
+#  CATKIN_DEPENDS dynamixel_pro_driver roscpp roslib sensor_msgs
 #  DEPENDS system_lib
 )
 
@@ -70,16 +70,17 @@ include_directories(include
 # )
 
 ## Declare a cpp executable
-# add_executable(dynamixel_pro_controller_node src/dynamixel_pro_controller_node.cpp)
+add_executable(dynamixel_pro_controller_node src/dynamixel_pro_controller.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(dynamixel_pro_controller_node dynamixel_pro_controller_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(dynamixel_pro_controller_node
-#   ${catkin_LIBRARIES}
-# )
+ target_link_libraries(dynamixel_pro_controller_node
+   ${catkin_LIBRARIES}
+   yaml-cpp
+ )
 
 #############
 ## Install ##
