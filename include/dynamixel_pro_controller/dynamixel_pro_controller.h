@@ -30,6 +30,8 @@ private:
     double publish_rate;
     bool publish_velocities;
 
+    bool shutting_down;
+
     struct dynamixel_spec
     {
         std::string name;

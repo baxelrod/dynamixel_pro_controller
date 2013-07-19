@@ -20,6 +20,7 @@ using namespace std;
 
 DynamixelProController::DynamixelProController()
 {
+    shutting_down = false;
     nh = new ros::NodeHandle("~");
 
     //load the file containing model info
@@ -143,6 +144,16 @@ DynamixelProController::DynamixelProController()
 
 DynamixelProController::~DynamixelProController()
 {
+    shutting_down = false;
+    delete nh;
+
+    ros::Duration(0.01).sleep();//just in case
+    for (map<string, dynamixel_info>::iterator iter = joint2dynamixel.begin(); iter != joint2dynamixel.end(); iter++)    
+    {
+        driver->setTorqueEnabled(iter->second.id, 0);
+    }
+    delete driver;
+
 }
 
 void DynamixelProController::startListeningForCommands()
@@ -157,6 +168,9 @@ void DynamixelProController::startBroadcastingJointStates()
 
 void DynamixelProController::jointStateCallback(const sensor_msgs::JointState::ConstPtr &msg)
 {
+    if (shutting_down)
+        return;
+
     bool has_pos = false, has_vel = false, has_torque = false;
     control_mode new_mode = UNKOWN;
 
@@ -269,6 +283,9 @@ void DynamixelProController::jointStateCallback(const sensor_msgs::JointState::C
 
 void DynamixelProController::publishJointStates(const ros::TimerEvent& e)
 {
+    if (shutting_down)
+        return;
+
     sensor_msgs::JointState msg;
     msg.header.stamp = ros::Time::now();
 
