@@ -1,3 +1,37 @@
+/*********************************************************************
+ * Software License Agreement (BSD License)
+ *
+ *  Copyright (c) 2013, Willow Garage
+ *  All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *   * Neither the name of Willow Garage nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ *********************************************************************/
+
 #ifndef DYNAMIXEL_PRO_CONTROLLER_H_
 #define DYNAMIXEL_PRO_CONTROLLER_H_
 
@@ -12,17 +46,30 @@
 namespace dynamixel_pro_controller
 {
 
+/**
+ * This class is a node that provides a ros interface to the dynamixel 
+ * Pro driver.
+ */
 class DynamixelProController
 {
 public:
     DynamixelProController();
     ~DynamixelProController();
 
-    void startListeningForCommands();
+    /**
+     * Start broadcasting JointState messages corresponding to the 
+     * connected dynamixels 
+     */
     void startBroadcastingJointStates();
 private:
+    /** 
+     * callback for recieving a command 
+     */
     void jointStateCallback(const sensor_msgs::JointState::ConstPtr &msg);
 
+    /**
+     * TimeEvent callback for publishing a joint state.
+     */
     void publishJointStates(const ros::TimerEvent& e);
 
     ros::NodeHandle *nh;
@@ -30,8 +77,12 @@ private:
     double publish_rate;
     bool publish_velocities;
 
-    bool shutting_down;
+    volatile bool shutting_down;
 
+    /**
+     * Struct that describes the dynamixel motor's static and physical
+     * properties 
+     */
     struct dynamixel_spec
     {
         std::string name;
@@ -40,6 +91,10 @@ private:
         double gear_reduction;
     };
 
+    /**
+     * Struct that describes each servo's place in the system including 
+     * which joint it corresponds to. 
+     */
     struct dynamixel_info 
     {
         int id;
@@ -51,6 +106,9 @@ private:
         double gear_reduction;
     };
 
+    /**
+     * The different control modes available on the dynamixel servos. 
+     */
     enum control_mode
     {
         POSITION_CONTROL = 3,
@@ -59,6 +117,9 @@ private:
         UNKOWN  = -1
     };
 
+    /**
+     * A struct that describes the state of a dynamixel servo motor
+     */
     struct dynamixel_status
     {
         int id;
