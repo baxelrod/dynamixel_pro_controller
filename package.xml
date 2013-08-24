@@ -4,7 +4,7 @@
   <version>0.8.1</version>
   <description>The dynamixel_pro_controller package</description>
 
-  <maintainer email="baxelrod@willowgarage.com">Brian Axelrod</maintainer>
+  <maintainer email="baxelrod.rosmaint@mit.edu">Brian Axelrod</maintainer>
 
 
   <license>BSD</license>
@@ -13,10 +13,11 @@
   <!-- <url type="website">http://ros.org/wiki/dynamixel_pro_controller</url> -->
 
 
-  <author email="baxelrod@willowgarage.com">Brian Axelrod</author> -->
+  <author email="baxelrod.rosmaint@mit.edu">Brian Axelrod</author> 
 
 
   <buildtool_depend>catkin</buildtool_depend>
+
   <build_depend>dynamixel_pro_driver</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>roslib</build_depend>
