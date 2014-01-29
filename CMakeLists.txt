@@ -7,7 +7,8 @@ project(dynamixel_pro_controller)
 find_package(catkin REQUIRED COMPONENTS dynamixel_pro_driver roscpp roslib sensor_msgs)
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+#find_package(Boost REQUIRED COMPONENTS system yaml-cpp)
+find_package(yaml-cpp)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
