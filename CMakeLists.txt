@@ -10,6 +10,13 @@ find_package(catkin REQUIRED COMPONENTS dynamixel_pro_driver roscpp roslib senso
 #find_package(Boost REQUIRED COMPONENTS system yaml-cpp)
 find_package(yaml-cpp)
 
+# There's no version hint in the yaml-cpp headers, so get the version number
+# from pkg-config.
+find_package(PkgConfig)
+pkg_check_modules(NEW_YAMLCPP yaml-cpp>=0.5)
+if(NEW_YAMLCPP_FOUND)
+add_definitions(-DHAVE_NEW_YAMLCPP)
+endif(NEW_YAMLCPP_FOUND)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed

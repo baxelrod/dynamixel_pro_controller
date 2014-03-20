@@ -42,6 +42,16 @@
 
 #include "yaml-cpp/yaml.h"
 
+#ifdef HAVE_NEW_YAMLCPP
+// The >> operator disappeared in yaml-cpp 0.5, so this function is
+// added to provide support for code written under the yaml-cpp 0.3 API.
+template<typename T>
+void operator >> (const YAML::Node& node, T& i)
+{
+    i = node.as<T>();
+}
+#endif
+
 #include <ros/package.h>
 #include <XmlRpcValue.h>
 
@@ -61,11 +71,16 @@ DynamixelProController::DynamixelProController()
     string path = ros::package::getPath("dynamixel_pro_controller");
     path += "/config/motor_data.yaml";
 
+    YAML::Node doc;
+
+#ifdef HAVE_NEW_YAMLCPP
+    doc = YAML::LoadFile(path);
+#else
     ifstream fin(path.c_str());
     YAML::Parser parser(fin);
-
-    YAML::Node doc;
     parser.GetNextDocument(doc);
+#endif
+
     for (int i = 0; i < doc.size(); i++)
     {
         dynamixel_spec spec;
