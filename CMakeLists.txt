@@ -8,15 +8,14 @@ find_package(catkin REQUIRED COMPONENTS dynamixel_pro_driver roscpp roslib senso
 
 ## System dependencies are found with CMake's conventions
 #find_package(Boost REQUIRED COMPONENTS system yaml-cpp)
-find_package(yaml-cpp)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(yaml-cpp REQUIRED yaml-cpp)
 
 # There's no version hint in the yaml-cpp headers, so get the version number
 # from pkg-config.
-find_package(PkgConfig)
-pkg_check_modules(NEW_YAMLCPP yaml-cpp>=0.5)
-if(NEW_YAMLCPP_FOUND)
+if(NOT ${yaml-cpp_VERSION} VERSION_LESS "0.5")
 add_definitions(-DHAVE_NEW_YAMLCPP)
-endif(NEW_YAMLCPP_FOUND)
+endif(NOT ${yaml-cpp_VERSION} VERSION_LESS "0.5")
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -70,6 +69,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(include
   ${catkin_INCLUDE_DIRS}
+  ${yaml-cpp_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
@@ -87,7 +87,7 @@ add_executable(dynamixel_pro_controller_node src/dynamixel_pro_controller.cpp)
 ## Specify libraries to link a library or executable target against
  target_link_libraries(dynamixel_pro_controller_node
    ${catkin_LIBRARIES}
-   yaml-cpp
+   ${yaml-cpp_LIBRARIES}
  )
 
 #############
