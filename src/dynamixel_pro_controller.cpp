@@ -37,6 +37,7 @@
 #include <sstream>
 #include <fstream>
 
+#include <cmath>
 #define _USE_MATH_DEFINES
 #include <math.h>
 
@@ -293,14 +294,15 @@ void DynamixelProController::jointStateCallback(const sensor_msgs::JointState::C
 
         if (has_pos)
         {
+            const double ToTicks = info.cpr / 2.0;
             double rad_pos = msg->position[i];
-            int pos = (int) (rad_pos / 2.0 / M_PI * info.cpr + 0.5);
+            int pos = static_cast<int>(round((rad_pos / M_PI) * ToTicks));
             positions.push_back(pos);
         }
         if (has_vel)
         {
             double rad_s_vel = msg->velocity[i];
-            int vel = (int) (rad_s_vel / 2.0 / M_PI * 60.0 * info.gear_reduction + 0.5);
+            int vel = static_cast<int>(rad_s_vel / 2.0 / M_PI * 60.0 * info.gear_reduction);
             velocities.push_back(vel);
         }
         if (has_torque)
@@ -386,7 +388,8 @@ void DynamixelProController::publishJointStates(const ros::TimerEvent& e)
         int position, velocity;
         if (driver->getPosition(info.id, position))
         {
-            double rad_pos = position / ((double) (info.cpr)) * 2 * M_PI;
+            const double FromTicks = 1.0 / (static_cast<double>(info.cpr) / 2.0);
+            double rad_pos = position * FromTicks * M_PI;
             msg.name.push_back(joint_name);
             msg.position.push_back(rad_pos);
             if (publish_velocities && driver->getVelocity(info.id, velocity))
