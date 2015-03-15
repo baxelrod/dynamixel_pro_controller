@@ -31,7 +31,6 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
-
 #include <string>
 #include <stdlib.h>
 #include <sstream>
@@ -86,7 +85,7 @@ DynamixelProController::DynamixelProController()
     {
         dynamixel_spec spec;
 
-        // Load the basic specs of this motor type 
+        // Load the basic specs of this motor type
         doc[i]["name"] >> spec.name;
         doc[i]["model_number"] >> spec.model_number;
         doc[i]["cpr"]  >> spec.cpr;
@@ -109,9 +108,9 @@ DynamixelProController::DynamixelProController()
     driver = new dynamixel_pro_driver::DynamixelProDriver(device, ss.str());
 
     int num_motors = 0;
-    
-    // read in the information regarding the servos that we're supposed to 
-    // connect to 
+
+    // read in the information regarding the servos that we're supposed to
+    // connect to
     if (nh->hasParam("servos"))
     {
         XmlRpc::XmlRpcValue servos;
@@ -122,7 +121,6 @@ DynamixelProController::DynamixelProController()
             ROS_ERROR("Invalid/missing servo information on the param server");
             ROS_BREAK();
         }
-
 
         num_motors = servos.size();
         //For every servo, load and verify its information
@@ -154,12 +152,12 @@ DynamixelProController::DynamixelProController()
             }
             else
             {
-                //store the servo's corresponding joint 
+                //store the servo's corresponding joint
                 info.joint_name = static_cast<std::string>(servos[i]["joint_name"]);
             }
-           
-            //Ping the servo to make sure that we can actually connect to it 
-            // and that it is alive and well on our bus 
+
+            //Ping the servo to make sure that we can actually connect to it
+            // and that it is alive and well on our bus
             if (driver->ping(info.id))
             {
                 bool success = true;
@@ -208,13 +206,13 @@ DynamixelProController::DynamixelProController()
         ROS_BREAK();
     }
 
-    //advertise the sensor feedback topic 
+    //advertise the sensor feedback topic
     jointStatePublisher  = nh->advertise<sensor_msgs::JointState>("/joint_states", 1);
-   
+
     //Start listening to command messages. There is a queue size of 1k so that
     //we don't accidentally miss commands that are sent to us in batches for
-    //many joints at once. 
-    jointStateSubscriber = nh->subscribe<sensor_msgs::JointState>("/joint_commands", 
+    //many joints at once.
+    jointStateSubscriber = nh->subscribe<sensor_msgs::JointState>("/joint_commands",
         1000, &DynamixelProController::jointStateCallback, this);
 }
 
@@ -225,7 +223,7 @@ DynamixelProController::~DynamixelProController()
 
     ros::Duration(0.1).sleep();//just in case. This should be changed to
     //something a tad more deterministic than this
-    for (map<string, dynamixel_info>::iterator iter = joint2dynamixel.begin(); iter != joint2dynamixel.end(); iter++)    
+    for (map<string, dynamixel_info>::iterator iter = joint2dynamixel.begin(); iter != joint2dynamixel.end(); iter++)
     {
         driver->setTorqueEnabled(iter->second.id, 0);
     }
@@ -252,15 +250,15 @@ void DynamixelProController::jointStateCallback(const sensor_msgs::JointState::C
         has_pos = true;
     if (msg->velocity.size() > 0)
         has_vel = true;
-    else if (msg->effort.size() > 0) 
-        has_torque = true; 
+    else if (msg->effort.size() > 0)
+        has_torque = true;
 
-    //figure out which mode we are going to operate the servos in 
+    //figure out which mode we are going to operate the servos in
     if (has_pos)
         new_mode = POSITION_CONTROL;
     else if (has_vel)
         new_mode = VELOCITY_CONTROL;
-    else if (has_torque) 
+    else if (has_torque)
         new_mode = TORQUE_CONTROL;
 
     vector<int> ids, velocities, positions, torques;
@@ -312,8 +310,6 @@ void DynamixelProController::jointStateCallback(const sensor_msgs::JointState::C
             if (first_run)
                 ROS_WARN("Dynamixel pro controller torque control mode not implemented");
         }
-
-        
     }
 
     //send the setpoints in monolithic packets to reduce bandwidth
@@ -326,7 +322,7 @@ void DynamixelProController::jointStateCallback(const sensor_msgs::JointState::C
             vector<int> temp;
             temp.push_back(ids[i]);//order matters here
             temp.push_back(positions[i]);
-            temp.push_back(abs(velocities[i])); //velocity limits should always be positive 
+            temp.push_back(abs(velocities[i])); //velocity limits should always be positive
             data.push_back(temp);
         }
         driver->setMultiPositionVelocity(data);
@@ -394,7 +390,7 @@ void DynamixelProController::publishJointStates(const ros::TimerEvent& e)
             msg.position.push_back(rad_pos);
             if (publish_velocities && driver->getVelocity(info.id, velocity))
             {
-                double rad_vel = ((double) velocity) * 2.0 * M_PI / 60.0 / info.gear_reduction; 
+                double rad_vel = ((double) velocity) * 2.0 * M_PI / 60.0 / info.gear_reduction;
                 msg.velocity.push_back(rad_vel);
             }
         }
@@ -402,22 +398,11 @@ void DynamixelProController::publishJointStates(const ros::TimerEvent& e)
     jointStatePublisher.publish(msg);
 }
 
-
-
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "dynamixel_pro_controller");
   DynamixelProController controller;
   controller.startBroadcastingJointStates();
 
-  ros::spin(); //use a single threaded spinner as I'm pretty sure this code isn't thread safe. 
+  ros::spin(); //use a single threaded spinner as I'm pretty sure this code isn't thread safe.
 }
-
-
-
-
-
-
-
-
-
