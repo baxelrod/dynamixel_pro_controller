@@ -40,6 +40,8 @@
 
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
+#include <dynamixel_pro_controller/ChainEnable.h>
+#include <dynamixel_pro_controller/ChainLimits.h>
 
 #include <dynamixel_pro_driver/dynamixel_pro_driver.h>
 
@@ -47,7 +49,7 @@ namespace dynamixel_pro_controller
 {
 
 /**
- * This class is a node that provides a ros interface to the dynamixel 
+ * This class is a node that provides a ros interface to the dynamixel
  * Pro driver.
  */
 class DynamixelProController
@@ -57,31 +59,26 @@ public:
     ~DynamixelProController();
 
     /**
-     * Start broadcasting JointState messages corresponding to the 
-     * connected dynamixels 
+     * Start broadcasting JointState messages corresponding to the
+     * connected dynamixels
      */
     void startBroadcastingJointStates();
 private:
-    /** 
-     * callback for recieving a command 
+    /**
+     * callback for recieving a command
      */
     void jointStateCallback(const sensor_msgs::JointState::ConstPtr &msg);
+    void chainEnableCallback(const dynamixel_pro_controller::ChainEnable::ConstPtr& msg);
+    void chainLimitCallback(const dynamixel_pro_controller::ChainLimits::ConstPtr& msg);
 
     /**
      * TimeEvent callback for publishing a joint state.
      */
     void publishJointStates(const ros::TimerEvent& e);
 
-    ros::NodeHandle *nh;
-    dynamixel_pro_driver::DynamixelProDriver *driver;
-    double publish_rate;
-    bool publish_velocities;
-
-    volatile bool shutting_down;
-
     /**
      * Struct that describes the dynamixel motor's static and physical
-     * properties 
+     * properties
      */
     struct dynamixel_spec
     {
@@ -92,10 +89,10 @@ private:
     };
 
     /**
-     * Struct that describes each servo's place in the system including 
-     * which joint it corresponds to. 
+     * Struct that describes each servo's place in the system including
+     * which joint it corresponds to.
      */
-    struct dynamixel_info 
+    struct dynamixel_info
     {
         int id;
         std::string joint_name;
@@ -107,7 +104,7 @@ private:
     };
 
     /**
-     * The different control modes available on the dynamixel servos. 
+     * The different control modes available on the dynamixel servos.
      */
     enum control_mode
     {
@@ -123,9 +120,19 @@ private:
     struct dynamixel_status
     {
         int id;
-        control_mode mode; 
+        control_mode mode;
         bool torque_enabled;
     };
+
+    int32_t posToTicks(double rads, const dynamixel_info& info) const;
+    double posToRads(int32_t ticks, const dynamixel_info& info) const;
+
+    ros::NodeHandle *nh;
+    dynamixel_pro_driver::DynamixelProDriver *driver;
+    double publish_rate;
+    bool publish_velocities;
+
+    volatile bool shutting_down;
 
     std::map<std::string, dynamixel_info> joint2dynamixel;
     std::map<uint16_t, dynamixel_spec> model_number2specs;
@@ -133,6 +140,8 @@ private:
 
     ros::Publisher jointStatePublisher;
     ros::Subscriber jointStateSubscriber;
+    ros::Subscriber chainEnableSubscriber;
+    ros::Subscriber chainLimitsSubscriber;
     ros::Timer broadcastTimer;
 };
 

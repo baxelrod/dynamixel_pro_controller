@@ -212,6 +212,10 @@ DynamixelProController::DynamixelProController()
     //many joints at once.
     jointStateSubscriber = nh->subscribe<sensor_msgs::JointState>("/joint_commands",
         1000, &DynamixelProController::jointStateCallback, this);
+    chainEnableSubscriber = nh->subscribe<ChainEnable>("joint_enable",
+        1000, &DynamixelProController::chainEnableCallback, this);
+    chainLimitsSubscriber = nh->subscribe<ChainLimits>("joint_limits",
+        1000, &DynamixelProController::chainLimitCallback, this);
 }
 
 DynamixelProController::~DynamixelProController()
@@ -226,7 +230,6 @@ DynamixelProController::~DynamixelProController()
         driver->setTorqueEnabled(iter->second.id, 0);
     }
     delete driver;
-
 }
 
 void DynamixelProController::startBroadcastingJointStates()
@@ -290,9 +293,8 @@ void DynamixelProController::jointStateCallback(const sensor_msgs::JointState::C
 
         if (has_pos)
         {
-            const double ToTicks = info.cpr / 2.0;
             double rad_pos = msg->position[i];
-            int pos = static_cast<int>(round((rad_pos / M_PI) * ToTicks));
+            int32_t pos = posToTicks(rad_pos, info);
             positions.push_back(pos);
         }
         if (has_vel)
@@ -362,6 +364,49 @@ void DynamixelProController::jointStateCallback(const sensor_msgs::JointState::C
     }
 }
 
+void DynamixelProController::chainEnableCallback(const ChainEnable::ConstPtr& msg)
+{
+    std::vector<std::vector<int> > enables;
+    enables.reserve(msg->list.size());
+    for(std::vector<JointEnable>::const_iterator ii = msg->list.begin(); ii != msg->list.end(); ++ii)
+    {
+        const std::string& name = ii->name;
+        const dynamixel_info &info = joint2dynamixel[name];
+        dynamixel_status &status = id2status[info.id];
+
+        std::vector<int> command(2, 0);
+        command[0] = info.id;
+        command[1] = static_cast<int>(ii->enable);
+        enables.push_back(command);
+    }
+
+    if(driver->setMultiTorqueEnabled(enables))
+    {
+        for(std::vector<JointEnable>::const_iterator ii = msg->list.begin(); ii != msg->list.end(); ++ii)
+        {
+            const std::string& name = ii->name;
+            const dynamixel_info &info = joint2dynamixel[name];
+            dynamixel_status &status = id2status[info.id];
+            status.torque_enabled = ii->enable;
+        }
+    }
+}
+
+void DynamixelProController::chainLimitCallback(const ChainLimits::ConstPtr& msg)
+{
+    for(std::vector<JointLimits>::const_iterator ii = msg->list.begin(); ii != msg->list.end(); ++ii)
+    {
+        const std::string& name = ii->name;
+        const dynamixel_info &info = joint2dynamixel[name];
+        dynamixel_status &status = id2status[info.id];
+
+        int32_t min_limit = posToTicks(ii->min_angle, info);
+        int32_t max_limit = posToTicks(ii->max_angle, info);
+
+        driver->setAngleLimits(info.id, min_limit, max_limit);
+    }
+}
+
 void DynamixelProController::publishJointStates(const ros::TimerEvent& e)
 {
     //don't access the driver after its been cleaned up
@@ -379,11 +424,10 @@ void DynamixelProController::publishJointStates(const ros::TimerEvent& e)
 
         //get the position and conditionally the velocity and then publish them
         //under the joint name which we just looked up
-        int position, velocity;
+        int32_t position, velocity;
         if (driver->getPosition(info.id, position))
         {
-            const double FromTicks = 1.0 / (static_cast<double>(info.cpr) / 2.0);
-            double rad_pos = position * FromTicks * M_PI;
+            double rad_pos = posToRads(position, info);
             msg.name.push_back(joint_name);
             msg.position.push_back(rad_pos);
             if (publish_velocities && driver->getVelocity(info.id, velocity))
@@ -396,11 +440,29 @@ void DynamixelProController::publishJointStates(const ros::TimerEvent& e)
     jointStatePublisher.publish(msg);
 }
 
+/**
+ * Converts a position angle in radians to ticks for a given motor type.
+ */
+int32_t DynamixelProController::posToTicks(double rads, const dynamixel_info& info) const
+{
+    const double ToTicks = info.cpr / 2.0;
+    return static_cast<int>(round((rads / M_PI) * ToTicks));
+}
+
+/**
+ * Converts a position angle in ticks to radians for a given motor type.
+ */
+double DynamixelProController::posToRads(int32_t ticks, const dynamixel_info& info) const
+{
+    const double FromTicks = 1.0 / (info.cpr / 2.0);
+    return static_cast<double>(ticks) * FromTicks * M_PI;
+}
+
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "dynamixel_pro_controller");
-  DynamixelProController controller;
-  controller.startBroadcastingJointStates();
+    ros::init(argc, argv, "dynamixel_pro_controller");
+    DynamixelProController controller;
+    controller.startBroadcastingJointStates();
 
-  ros::spin(); //use a single threaded spinner as I'm pretty sure this code isn't thread safe.
+    ros::spin(); //use a single threaded spinner as I'm pretty sure this code isn't thread safe.
 }
