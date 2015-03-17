@@ -98,12 +98,14 @@ DynamixelProController::DynamixelProController()
 
     string device;
     int baudrate;
+    int timeout_ms;
     nh->param<std::string>("device", device, "/dev/ttyUSB0");
     nh->param<int>("baudrate", baudrate, 1000000);
+    nh->param<int>("serial_timeout_ms", timeout_ms, 1);
     stringstream ss;
     ss << baudrate;
 
-    driver = new dynamixel_pro_driver::DynamixelProDriver(device, ss.str());
+    driver = new dynamixel_pro_driver::DynamixelProDriver(device, ss.str(), timeout_ms);
 
     int num_motors = 0;
 
