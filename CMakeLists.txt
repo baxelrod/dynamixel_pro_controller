@@ -4,7 +4,7 @@ project(dynamixel_pro_controller)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS dynamixel_pro_driver roscpp roslib sensor_msgs)
+find_package(catkin REQUIRED COMPONENTS dynamixel_pro_driver roscpp roslib sensor_msgs message_generation)
 
 ## System dependencies are found with CMake's conventions
 #find_package(Boost REQUIRED COMPONENTS system yaml-cpp)
@@ -27,11 +27,13 @@ endif(NOT ${yaml-cpp_VERSION} VERSION_LESS "0.5")
 #######################################
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  JointEnable.msg
+  ChainEnable.msg
+  JointLimits.msg
+  ChainLimits.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -41,10 +43,12 @@ endif(NOT ${yaml-cpp_VERSION} VERSION_LESS "0.5")
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   sensor_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  sensor_msgs
+  std_msgs
+  geometry_msgs
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -105,11 +109,15 @@ add_executable(dynamixel_pro_controller_node src/dynamixel_pro_controller.cpp)
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS dynamixel_pro_controller dynamixel_pro_controller_node
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+install(TARGETS dynamixel_pro_controller_node
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY config
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/
